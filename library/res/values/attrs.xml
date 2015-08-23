@@ -4,6 +4,12 @@
     <attr name="toDegrees" format="float|reference" />
     <attr name="childSize" format="dimension|reference" />
 
+    <declare-styleable name="ArcFlexibleLayout">
+        <attr name="fromDegrees"/>
+        <attr name="toDegrees"/>
+        <attr name="childSize"/>
+    </declare-styleable>
+
 	<declare-styleable name="ArcLayout">
         <attr name="fromDegrees"/>
         <attr name="toDegrees"/>
@@ -15,8 +21,13 @@
         <attr name="toDegrees"/>
         <attr name="childSize"/>
     </declare-styleable>
-	
+
 	<declare-styleable name="RayLayout">
 		<attr name="leftHolderWidth" format="dimension" />
 	</declare-styleable>
+
+    <declare-styleable name="starViewAttr">
+        <attr name="degree" format="float|reference"/>
+        <attr name="radius" format="integer|reference"/>
+    </declare-styleable>
 </resources>
