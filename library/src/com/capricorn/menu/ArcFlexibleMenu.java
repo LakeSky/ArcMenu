@@ -2,6 +2,8 @@ package com.capricorn.menu;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -17,6 +19,9 @@ import com.capricorn.R;
 public class ArcFlexibleMenu  extends RelativeLayout {
     private ArcFlexibleLayout mArcLayout;
 
+    private float mDirection;
+    private Drawable compass;
+
     private ImageView mHintView;
 
     public ArcFlexibleMenu(Context context) {
@@ -31,6 +36,8 @@ public class ArcFlexibleMenu  extends RelativeLayout {
     }
 
     private void init(Context context) {
+        mDirection = 0.0f;
+        compass = null;
         LayoutInflater li = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         li.inflate(R.layout.arc_flexible_menu, this);
 
@@ -163,4 +170,24 @@ public class ArcFlexibleMenu  extends RelativeLayout {
 
         return animation;
     }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        /*if (compass == null) {
+            compass = getDrawable();
+            compass.setBounds(0, 0, getWidth(), getHeight());
+        }*/
+
+        canvas.save();
+        canvas.rotate(mDirection, getWidth() / 2, getHeight() / 2);
+
+//        compass.draw(canvas);
+        canvas.restore();
+    }
+
+    public void updateDirection(float direction) {
+        mDirection = direction;
+        invalidate();
+    }
+
 }

@@ -2,6 +2,8 @@ package com.capricorn.view;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 import com.capricorn.R;
@@ -46,4 +48,22 @@ public class StarView extends ImageView {
     public void setRadius(int radius) {
         this.radius = radius;
     }
+
+    /*@Override
+    protected void onDraw(Canvas canvas) {
+        if (compass == null) {
+            compass = getDrawable();
+            compass.setBounds(0, 0, getWidth(), getHeight());
+        }
+
+        canvas.save();
+        canvas.rotate(mDirection, getWidth() / 2, getHeight() / 2);
+        compass.draw(canvas);
+        canvas.restore();
+    }
+
+    public void updateDirection(float direction) {
+        mDirection = direction;
+        invalidate();
+    }*/
 }
