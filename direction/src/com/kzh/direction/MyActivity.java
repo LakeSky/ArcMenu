@@ -61,6 +61,10 @@ public class MyActivity extends Activity {
     private float mTargetDirection;
     private final float MAX_ROATE_DEGREE = 1.0f;
     private AccelerateInterpolator mInterpolator;
+    float[] calmValues = new float[2];
+    int initFlag = 0;
+    int offsetNum = 0;
+    float preValue = -9999;
     //----------------------------------
 
     /**
@@ -175,7 +179,18 @@ public class MyActivity extends Activity {
 
     private void initArcMenu(ArcFlexibleMenu menu, int[] itemDrawables) {
         final int itemCount = itemDrawables.length;
-        for (int i = 0; i < itemCount; i++) {
+        StarView item = new StarView(this);
+        final int i = 0;
+        item.setImageResource(itemDrawables[i]);
+        item.setDegree(0);
+        item.setRadius(300);
+        menu.addItem(item, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MyActivity.this, "position:" + 0, Toast.LENGTH_SHORT).show();
+            }
+        });
+        /*for (int i = 0; i < itemCount; i++) {
             Random rand = new Random();
             StarView item = new StarView(this);
             item.setImageResource(itemDrawables[i]);
@@ -190,7 +205,7 @@ public class MyActivity extends Activity {
                     Toast.makeText(MyActivity.this, "position:" + position, Toast.LENGTH_SHORT).show();
                 }
             });
-        }
+        }*/
     }
 
     @Override
@@ -210,14 +225,14 @@ public class MyActivity extends Activity {
         } else {
             mLocationTextView.setText(R.string.cannot_get_location);
         }*/
-        if (aSensor != null && mSensor!=null) {
+        if (aSensor != null && mSensor != null) {
             /*mSensorManager.registerListener(mOrientationSensorEventListener, mOrientationSensor,
                     SensorManager.SENSOR_DELAY_GAME);*/
             sm.registerListener(myListener, aSensor, SensorManager.SENSOR_DELAY_GAME);
             sm.registerListener(myListener, mSensor, SensorManager.SENSOR_DELAY_GAME);
         }
         mStopDrawing = false;
-        mHandler.postDelayed(mCompassViewUpdater, 20);
+        mHandler.postDelayed(mCompassViewUpdater, 40);
     }
 
     final SensorEventListener myListener = new SensorEventListener() {
@@ -230,7 +245,6 @@ public class MyActivity extends Activity {
 
         @Override
         public void onSensorChanged(SensorEvent event) {
-            // TODO Auto-generated method stub
             if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
                 accelerometerValues = event.values;
             }
@@ -239,17 +253,13 @@ public class MyActivity extends Activity {
             }
             //调用getRotaionMatrix获得变换矩阵R[]
             SensorManager.getRotationMatrix(result, null, accelerometerValues, magneticFieldValues);
+            //经过SensorManager.getOrientation(result, values);得到的values值为弧度
             SensorManager.getOrientation(result, values);
-            //经过SensorManager.getOrientation(R, values);得到的values值为弧度
             //转换为角度
             values[0] = (float) Math.toDegrees(values[0]);
-
-            textview.setText("x=" + values[0]);
-            //showAnimation(arcFlexibleMenu, fromDegree, values[0]);
-            fromDegree = values[0];
-
-            float direction = values[0] * -1.0f;
-            mTargetDirection = normalizeDegree(direction);
+            float valuex=normalizeDegree(values[0]*-1.0f);
+            textview.setText("x=" + valuex);
+            mTargetDirection = calmDownSensor(valuex);
         }
     };
 
@@ -268,9 +278,7 @@ public class MyActivity extends Activity {
         @Override
         public void run() {
             if (arcFlexibleMenu != null && !mStopDrawing) {
-                if (mDirection != mTargetDirection) {
-
-                    // calculate the short routine
+                /*if (mDirection != mTargetDirection) {
                     float to = mTargetDirection;
                     if (to - mDirection > 180) {
                         to -= 360;
@@ -288,14 +296,11 @@ public class MyActivity extends Activity {
                     mDirection = normalizeDegree(mDirection
                             + ((to - mDirection) * mInterpolator.getInterpolation(Math
                             .abs(distance) > MAX_ROATE_DEGREE ? 0.4f : 0.3f)));
-                    arcFlexibleMenu.updateDirection(mDirection);
-                    showAnimation(arcFlexibleMenu, fromDegree, mDirection);
                     fromDegree = mDirection;
-                }
-
-                //updateDirection();
-
-                mHandler.postDelayed(mCompassViewUpdater, 20);
+                }*/
+                showAnimation(arcFlexibleMenu, fromDegree, mTargetDirection);
+                fromDegree=mTargetDirection;
+                mHandler.postDelayed(mCompassViewUpdater, 200);
             }
         }
     };
@@ -305,18 +310,44 @@ public class MyActivity extends Activity {
         mTargetDirection = 0.0f;
         mInterpolator = new AccelerateInterpolator();
         mStopDrawing = true;
-        /*mChinease = TextUtils.equals(Locale.getDefault().getLanguage(), "zh");
-
-        mCompassView = findViewById(R.id.view_compass);
-        mPointer = (CompassView) findViewById(R.id.compass_pointer);
-        mLocationTextView = (TextView) findViewById(R.id.textview_location);
-        mDirectionLayout = (LinearLayout) findViewById(R.id.layout_direction);
-        mAngleLayout = (LinearLayout) findViewById(R.id.layout_angle);
-
-        mPointer.setImageResource(mChinease ? R.drawable.compass_cn : R.drawable.compass);*/
     }
 
     private float normalizeDegree(float degree) {
         return (degree + 720) % 360;
+    }
+
+    private Float calmDownTheSensor(float value) {
+        if (initFlag < 2) {
+            calmValues[initFlag] = value;
+            initFlag++;
+            return value;
+        } else {
+            if (calmValues[1] > calmValues[0] && calmValues[1] < value ||
+                    calmValues[1] > value && calmValues[1] < calmValues[0]) {
+                calmValues[0] = calmValues[1];
+                calmValues[1] = value;
+                return value;
+            } else {
+                calmValues[0] = calmValues[1];
+                calmValues[1] = value;
+                return calmValues[0];
+            }
+        }
+    }
+
+    private Float calmDownSensor(float value) {
+        if (preValue == -9999) {
+            preValue = value;
+            return value;
+        } else {
+            if (Math.abs(preValue - value) > 5 && offsetNum < 5) {
+                offsetNum++;
+                return preValue;
+            } else {
+                preValue = value;
+                offsetNum = 0;
+                return value;
+            }
+        }
     }
 }

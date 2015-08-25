@@ -69,28 +69,28 @@ public class ArcFlexibleLayout extends ViewGroup {
     private static Rect computeChildFrame(final int centerX, final int centerY, final int radius, final float degrees,
                                           final int size) {
 
-        final double childCenterX = centerX + radius * Math.cos(Math.toRadians(degrees));
-        final double childCenterY = centerY + radius * Math.sin(Math.toRadians(degrees));
+        final double childCenterX = centerX + radius * Math.sin(Math.toRadians(degrees));
+        final double childCenterY = centerY - radius * Math.cos(Math.toRadians(degrees));
 
         return new Rect((int) (childCenterX - size / 2), (int) (childCenterY - size / 2),
                 (int) (childCenterX + size / 2), (int) (childCenterY + size / 2));
     }
 
-    @Override
+    /*@Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        /*final int radius = mRadius = computeRadius(Math.abs(mToDegrees - mFromDegrees), getChildCount(), mChildSize,
+        *//*final int radius = mRadius = computeRadius(Math.abs(mToDegrees - mFromDegrees), getChildCount(), mChildSize,
                 mChildPadding, MIN_RADIUS);
         final int size = radius * 2 + mChildSize + mChildPadding + mLayoutPadding * 2;
 
-        setMeasuredDimension(size, size);*/
+        setMeasuredDimension(size, size);*//*
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
 
-        /*final int count = getChildCount();
+        *//*final int count = getChildCount();
         for (int i = 0; i < count; i++) {
             getChildAt(i).measure(MeasureSpec.makeMeasureSpec(mChildSize, MeasureSpec.EXACTLY),
                     MeasureSpec.makeMeasureSpec(mChildSize, MeasureSpec.EXACTLY));
-        }*/
-    }
+        }*//*
+    }*/
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
