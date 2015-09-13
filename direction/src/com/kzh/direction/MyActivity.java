@@ -24,10 +24,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.baidu.location.*;
+import com.baidu.mapapi.model.LatLng;
 import com.capricorn.ArcMenu;
 import com.capricorn.menu.ArcFlexibleMenu;
 import com.capricorn.view.StarView;
+import com.kzh.direction.util.LocationUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -47,8 +50,11 @@ public class MyActivity extends Activity {
     float[] values = new float[3];
     float[] result = new float[9];
 
+    /*private static final int[] ITEM_DRAWABLES = {R.drawable.composer_camera, R.drawable.composer_music,
+            R.drawable.composer_place, R.drawable.composer_sleep, R.drawable.composer_thought, R.drawable.composer_with};*/
+
     private static final int[] ITEM_DRAWABLES = {R.drawable.composer_camera, R.drawable.composer_music,
-            R.drawable.composer_place, R.drawable.composer_sleep, R.drawable.composer_thought, R.drawable.composer_with};
+            R.drawable.composer_place, R.drawable.composer_sleep};
 
     public LocationClient mLocationClient = null;
     public BDLocationListener myLocListener = new MyLocationListener();
@@ -65,6 +71,12 @@ public class MyActivity extends Activity {
     int initFlag = 0;
     int offsetNum = 0;
     float preValue = -9999;
+    boolean animateFlag = true;
+
+
+    float prevalue;
+    float prediff;
+    int num = 0;
     //----------------------------------
 
     /**
@@ -82,10 +94,10 @@ public class MyActivity extends Activity {
         mSensor = sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
         //-------------------------------
-        /*mLocationClient = new LocationClient(getApplicationContext());     //声明LocationClient类
+        mLocationClient = new LocationClient(getApplicationContext());     //声明LocationClient类
         initLocation();
-        mLocationClient.registerLocationListener(myListener);    //注册监听函数
-        mLocationClient.start();*/
+        mLocationClient.registerLocationListener(myLocListener);    //注册监听函数
+        mLocationClient.start();
 
         arcFlexibleMenu = (ArcFlexibleMenu) findViewById(R.id.arc_menu);
         initArcMenu(arcFlexibleMenu, ITEM_DRAWABLES);
@@ -179,7 +191,7 @@ public class MyActivity extends Activity {
 
     private void initArcMenu(ArcFlexibleMenu menu, int[] itemDrawables) {
         final int itemCount = itemDrawables.length;
-        StarView item = new StarView(this);
+        /*StarView item = new StarView(this);
         final int i = 0;
         item.setImageResource(itemDrawables[i]);
         item.setDegree(0);
@@ -189,13 +201,22 @@ public class MyActivity extends Activity {
             public void onClick(View v) {
                 Toast.makeText(MyActivity.this, "position:" + 0, Toast.LENGTH_SHORT).show();
             }
-        });
-        /*for (int i = 0; i < itemCount; i++) {
+        });*/
+        List<LatLng> latLngs=new ArrayList<LatLng>();
+        latLngs.add(new LatLng(31.201109,120.618951));//永旺 相机
+        latLngs.add(new LatLng(31.134328,120.650972));//华邦国际 音乐
+        latLngs.add(new LatLng(31.157199,120.606991));//东太湖生态园 地点
+        latLngs.add(new LatLng(31.175615,120.670591));//海悦花园 月亮
+        //永旺:相机,华邦国际:音乐,东太湖生态园:地点,海悦花园:月亮
+        for (int i = 0; i < itemCount; i++) {
             Random rand = new Random();
             StarView item = new StarView(this);
             item.setImageResource(itemDrawables[i]);
-            item.setDegree(i * 20 + rand.nextInt(100));
-            item.setRadius(i * 10 + 200);
+            LatLng latLng=latLngs.get(i);
+            double degree= LocationUtil.getAzimuth(31.173838, 120.653092, latLng.latitude, latLng.longitude);
+            item.setDegree((float)degree);
+            Log.v("degree------",String.valueOf(degree));
+            item.setRadius(300);
 
             final int position = i;
             menu.addItem(item, new View.OnClickListener() {
@@ -205,7 +226,7 @@ public class MyActivity extends Activity {
                     Toast.makeText(MyActivity.this, "position:" + position, Toast.LENGTH_SHORT).show();
                 }
             });
-        }*/
+        }
     }
 
     @Override
@@ -213,7 +234,7 @@ public class MyActivity extends Activity {
     protected void onPause() {
         // TODO Auto-generated method stub
         super.onPause();
-        sm.unregisterListener(myListener);
+        sm.unregisterListener(mySensorListener);
     }
 
     @Override
@@ -228,14 +249,14 @@ public class MyActivity extends Activity {
         if (aSensor != null && mSensor != null) {
             /*mSensorManager.registerListener(mOrientationSensorEventListener, mOrientationSensor,
                     SensorManager.SENSOR_DELAY_GAME);*/
-            sm.registerListener(myListener, aSensor, SensorManager.SENSOR_DELAY_GAME);
-            sm.registerListener(myListener, mSensor, SensorManager.SENSOR_DELAY_GAME);
+            sm.registerListener(mySensorListener, aSensor, SensorManager.SENSOR_DELAY_GAME);
+            sm.registerListener(mySensorListener, mSensor, SensorManager.SENSOR_DELAY_GAME);
         }
         mStopDrawing = false;
         mHandler.postDelayed(mCompassViewUpdater, 40);
     }
 
-    final SensorEventListener myListener = new SensorEventListener() {
+    final SensorEventListener mySensorListener = new SensorEventListener() {
 
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -257,9 +278,11 @@ public class MyActivity extends Activity {
             SensorManager.getOrientation(result, values);
             //转换为角度
             values[0] = (float) Math.toDegrees(values[0]);
-            float valuex=normalizeDegree(values[0]*-1.0f);
-            textview.setText("x=" + valuex);
-            mTargetDirection = calmDownSensor(valuex);
+            float valuex = normalizeDegree(values[0] * -1.0f);
+//            mTargetDirection=valuex;
+            //mTargetDirection = calmDownSensor(valuex);
+            mTargetDirection = calmDown(valuex);
+            //textview.setText("永旺:相机,华邦国际:音乐,东太湖生态园:地点,海悦花园:月亮  x=" + mTargetDirection);
         }
     };
 
@@ -278,7 +301,7 @@ public class MyActivity extends Activity {
         @Override
         public void run() {
             if (arcFlexibleMenu != null && !mStopDrawing) {
-                /*if (mDirection != mTargetDirection) {
+                if (mDirection != mTargetDirection) {
                     float to = mTargetDirection;
                     if (to - mDirection > 180) {
                         to -= 360;
@@ -297,10 +320,12 @@ public class MyActivity extends Activity {
                             + ((to - mDirection) * mInterpolator.getInterpolation(Math
                             .abs(distance) > MAX_ROATE_DEGREE ? 0.4f : 0.3f)));
                     fromDegree = mDirection;
-                }*/
-                showAnimation(arcFlexibleMenu, fromDegree, mTargetDirection);
-                fromDegree=mTargetDirection;
-                mHandler.postDelayed(mCompassViewUpdater, 200);
+                }
+                if (animateFlag) {
+                    showAnimation(arcFlexibleMenu, fromDegree, fromDegree + mDirection);
+                    fromDegree = fromDegree + mDirection;
+                }
+                mHandler.postDelayed(mCompassViewUpdater, 20);
             }
         }
     };
@@ -336,18 +361,46 @@ public class MyActivity extends Activity {
     }
 
     private Float calmDownSensor(float value) {
-        if (preValue == -9999) {
+        if (animateFlag) {
             preValue = value;
             return value;
         } else {
-            if (Math.abs(preValue - value) > 5 && offsetNum < 5) {
+            float difference = Math.abs(preValue - value);
+            if (difference > 3 && offsetNum < 6) {
                 offsetNum++;
-                return preValue;
+                animateFlag = false;
+                return 0f;
             } else {
+                animateFlag = true;
                 preValue = value;
                 offsetNum = 0;
                 return value;
             }
+        }
+    }
+
+    public float calmDown(float value) {
+        float diff = Math.abs(value - prevalue);
+        if (diff > 10) {
+            if (prediff > 10) {
+                num++;
+            } else {
+                if (num > 5) {
+                    prevalue = value;
+                }
+                num = 0;
+            }
+            prediff = diff;
+            return prevalue;
+        } else {
+            if (diff < 3) {
+                if (prediff < 3) {
+                    value = (prevalue + value) / 2;
+                }
+            }
+            prevalue = value;
+            prediff = diff;
+            return value;
         }
     }
 }
