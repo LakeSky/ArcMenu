@@ -2,6 +2,7 @@ package com.kzh.direction;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -19,10 +20,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.RotateAnimation;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import com.baidu.location.*;
 import com.baidu.mapapi.model.LatLng;
 import com.capricorn.ArcMenu;
@@ -37,6 +35,7 @@ import java.util.Random;
 
 public class MyActivity extends Activity {
 
+    BDLocation mylocation = null;
     private SensorManager sm = null;
     private Sensor aSensor = null;
     private Sensor mSensor = null;
@@ -60,7 +59,6 @@ public class MyActivity extends Activity {
     public BDLocationListener myLocListener = new MyLocationListener();
 
     //----------------------------------
-    StarView starView;
     private boolean mStopDrawing;
     protected final Handler mHandler = new Handler();
     private float mDirection;
@@ -73,15 +71,13 @@ public class MyActivity extends Activity {
     float preValue = -9999;
     boolean animateFlag = true;
 
-
     float prevalue;
     float prediff;
     int num = 0;
     //----------------------------------
 
-    /**
-     * Called when the activity is first created.
-     */
+    Button button;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,6 +98,18 @@ public class MyActivity extends Activity {
         arcFlexibleMenu = (ArcFlexibleMenu) findViewById(R.id.arc_menu);
         initArcMenu(arcFlexibleMenu, ITEM_DRAWABLES);
         initResources();
+        button = (Button) findViewById(R.id.buttonSearch);
+        button.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                Bundle bundle = new Bundle();
+                //传递name参数为tinyphp
+                bundle.putDouble("lat", mylocation.getLatitude());
+                bundle.putDouble("lng", mylocation.getLongitude());
+                Intent intent = new Intent(MyActivity.this, SearchActivity.class);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        });
     }
 
     private void initLocation() {
@@ -124,6 +132,7 @@ public class MyActivity extends Activity {
     public class MyLocationListener implements BDLocationListener {
         @Override
         public void onReceiveLocation(BDLocation location) {
+            mylocation = location;
             //Receive Location
             StringBuffer sb = new StringBuffer(256);
             sb.append("time : ");
@@ -202,25 +211,23 @@ public class MyActivity extends Activity {
                 Toast.makeText(MyActivity.this, "position:" + 0, Toast.LENGTH_SHORT).show();
             }
         });*/
-        List<LatLng> latLngs=new ArrayList<LatLng>();
-        latLngs.add(new LatLng(31.201109,120.618951));//永旺 相机
-        latLngs.add(new LatLng(31.134328,120.650972));//华邦国际 音乐
-        latLngs.add(new LatLng(31.157199,120.606991));//东太湖生态园 地点
-        latLngs.add(new LatLng(31.175615,120.670591));//海悦花园 月亮
+        List<LatLng> latLngs = new ArrayList<LatLng>();
+        latLngs.add(new LatLng(31.201109, 120.618951));//永旺 相机
+        latLngs.add(new LatLng(31.134328, 120.650972));//华邦国际 音乐
+        latLngs.add(new LatLng(31.157199, 120.606991));//东太湖生态园 地点
+        latLngs.add(new LatLng(31.175615, 120.670591));//海悦花园 月亮
         //永旺:相机,华邦国际:音乐,东太湖生态园:地点,海悦花园:月亮
         for (int i = 0; i < itemCount; i++) {
-            Random rand = new Random();
             StarView item = new StarView(this);
             item.setImageResource(itemDrawables[i]);
-            LatLng latLng=latLngs.get(i);
-            double degree= LocationUtil.getAzimuth(31.173838, 120.653092, latLng.latitude, latLng.longitude);
-            item.setDegree((float)degree);
-            Log.v("degree------",String.valueOf(degree));
+            LatLng latLng = latLngs.get(i);
+            double degree = LocationUtil.getAzimuth(mylocation.getLatitude(), mylocation.getLongitude(), latLng.latitude, latLng.longitude);
+            item.setDegree((float) degree);
+            Log.v("degree------", String.valueOf(degree));
             item.setRadius(300);
 
             final int position = i;
             menu.addItem(item, new View.OnClickListener() {
-
                 @Override
                 public void onClick(View v) {
                     Toast.makeText(MyActivity.this, "position:" + position, Toast.LENGTH_SHORT).show();

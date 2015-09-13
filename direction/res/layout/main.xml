@@ -13,6 +13,12 @@
         android:textSize="16dp"
         android:text="这里是一个TextView视图组件" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="搜索"
+        android:id="@+id/buttonSearch" />
+
     <com.capricorn.menu.ArcFlexibleMenu
         android:id="@+id/arc_menu"
         android:layout_width="wrap_content"
